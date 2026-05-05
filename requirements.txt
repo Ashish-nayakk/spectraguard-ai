@@ -17,6 +17,8 @@ seaborn>=0.12.0
 # UI
 streamlit>=1.28.0
 plotly>=5.15.0
+flask
+gunicorn
 
 # Utilities
 tqdm>=4.65.0
