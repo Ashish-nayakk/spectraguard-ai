@@ -16,9 +16,13 @@ from utils.face_utils import get_primary_face
 # Import Hugging Face model
 from hf_model import HFDeepfakeDetector
 
-# Ensure custom model is loaded early
-get_model()
-
+# Try to load custom model, but don't crash if weights are missing
+try:
+    get_model()
+    print("Custom model loaded successfully.")
+except Exception as e:
+    print(f"Custom model not loaded (weights missing): {e}")
+    print("Continuing with Hugging Face model only.")
 # Load Hugging Face model (downloads ~300 MB first time)
 hf_detector = HFDeepfakeDetector()
 
@@ -236,7 +240,14 @@ def api_predict_hf():
     }
     return jsonify(result)
 
+@app.route('/health')
+def health_check():
+    return "OK", 200
+
 if __name__ == '__main__':
     import os
     port = int(os.environ.get("PORT", 7860))
+    # Log the binding to help debug
+    print(f"Starting Flask app on host=0.0.0.0 port={port}")
+    # Use debug=False for production
     app.run(debug=False, host='0.0.0.0', port=port)
