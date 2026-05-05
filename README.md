@@ -1,3 +1,10 @@
+---
+title: SpectraGuard AI
+emoji: 🛡️
+sdk: docker
+app_port: 7860
+---
+
 # 🔬 AI Deepfake Detection System
 ## ✅ Pretrained — No Training Required
 
