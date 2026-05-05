@@ -5,6 +5,7 @@ import tempfile
 import numpy as np
 from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_from_directory
+from huggingface_hub import hf_hub_download   # <-- ADD THIS IMPORT
 
 # Import your custom predictor
 import sys
@@ -16,16 +17,58 @@ from utils.face_utils import get_primary_face
 # Import Hugging Face model
 from hf_model import HFDeepfakeDetector
 
-# Try to load custom model, but don't crash if weights are missing
+# ------------------------------------------------------------------
+# Function to download custom model weights from Hugging Face Dataset
+# ------------------------------------------------------------------
+def download_custom_weights():
+    """Download custom model weights from Hugging Face Dataset if not present locally."""
+    local_dir = "model/weights"
+    os.makedirs(local_dir, exist_ok=True)
+    weight_files = ["deepfake_detector.pt", "best_model.pt"]
+    for file in weight_files:
+        local_path = os.path.join(local_dir, file)
+        if not os.path.exists(local_path):
+            print(f"Downloading {file} from Hugging Face Dataset...")
+            try:
+                hf_hub_download(
+                    repo_id="ashish-kumar-nayak/spectraguard-weights",
+                    filename=file,
+                    local_dir=local_dir,
+                    local_dir_use_symlinks=False
+                )
+                print(f"Downloaded {file}")
+            except Exception as e:
+                print(f"Could not download {file}: {e}")
+        else:
+            print(f"{file} already exists locally.")
+
+# ------------------------------------------------------------------
+# Download weights before trying to load the custom model
+# ------------------------------------------------------------------
+download_custom_weights()
+
+# ------------------------------------------------------------------
+# Load custom model (only if weights are present)
+# ------------------------------------------------------------------
+custom_model_available = False
 try:
-    get_model()
-    print("Custom model loaded successfully.")
+    model = get_model()
+    if model is not None:
+        custom_model_available = True
+        print("Custom model loaded successfully.")
+    else:
+        print("Custom model could not be loaded (weights missing).")
 except Exception as e:
-    print(f"Custom model not loaded (weights missing): {e}")
-    print("Continuing with Hugging Face model only.")
+    print(f"Custom model loading error: {e}")
+
+# ------------------------------------------------------------------
 # Load Hugging Face model (downloads ~300 MB first time)
+# ------------------------------------------------------------------
 hf_detector = HFDeepfakeDetector()
 
+# ------------------------------------------------------------------
+# Flask app setup
+# ------------------------------------------------------------------
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500MB
 
@@ -60,6 +103,8 @@ def serve_static(filename):
 # -------- Custom Model Endpoints --------
 @app.route('/predict_image', methods=['POST'])
 def api_predict_image():
+    if not custom_model_available:
+        return jsonify({'error': 'Custom model not available (weights missing). Please use the Hugging Face model.'}), 503
     if 'image' not in request.files:
         return jsonify({'error': 'No image file'}), 400
     file = request.files['image']
@@ -89,6 +134,8 @@ def api_predict_image():
 
 @app.route('/predict_webcam', methods=['POST'])
 def api_predict_webcam():
+    if not custom_model_available:
+        return jsonify({'error': 'Custom model not available (weights missing). Please use the Hugging Face model.'}), 503
     if 'image' not in request.files:
         return jsonify({'error': 'No image file'}), 400
     file = request.files['image']
@@ -112,6 +159,8 @@ def api_predict_webcam():
 
 @app.route('/predict_video', methods=['POST'])
 def api_predict_video():
+    if not custom_model_available:
+        return jsonify({'error': 'Custom model not available (weights missing). Please use the Hugging Face model.'}), 503
     if 'video' not in request.files:
         return jsonify({'error': 'No video file'}), 400
     file = request.files['video']
@@ -214,7 +263,6 @@ def api_predict_hf():
     rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
     prob = hf_detector.predict(rgb)
 
-    # Apply thresholds
     if prob >= fake_th:
         label = "FAKE"
         confidence = prob
@@ -225,7 +273,6 @@ def api_predict_hf():
         label = "UNCERTAIN"
         confidence = 1 - abs(prob - 0.5) * 2
 
-    # Encode original image for preview (HF model doesn't provide face crop)
     _, buffer = cv2.imencode('.jpg', bgr)
     img_base64 = base64.b64encode(buffer).decode('utf-8')
     face_data_url = f"data:image/jpeg;base64,{img_base64}"
@@ -245,9 +292,6 @@ def health_check():
     return "OK", 200
 
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get("PORT", 7860))
-    # Log the binding to help debug
     print(f"Starting Flask app on host=0.0.0.0 port={port}")
-    # Use debug=False for production
     app.run(debug=False, host='0.0.0.0', port=port)
