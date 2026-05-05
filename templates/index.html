@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>SpectraGuard AI | Deepfake Detection</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script type="importmap">
         {
@@ -32,7 +32,7 @@
             <div class="setting-group">
                 <div class="setting-label">
                     <span>🧬 TTA Ensemble</span>
-                    <span class="tooltip" data-tip="5‑view test‑time augmentation">ⓘ</span>
+                    <span class="tooltip" data-tip="Averages 5 augmented predictions for higher accuracy">ⓘ</span>
                 </div>
                 <label class="toggle-switch">
                     <input type="checkbox" id="tta-toggle" checked>
@@ -40,7 +40,7 @@
                 </label>
             </div>
 
-            <!-- Model selection dropdown (styled to blend) -->
+            <!-- Model Selection Dropdown -->
             <div class="setting-group">
                 <div class="setting-label">
                     <span>🤖 Model</span>
@@ -76,6 +76,7 @@
         </aside>
 
         <main class="main-dashboard">
+            <!-- Header -->
             <header class="dashboard-header">
                 <div class="logo-area">
                     <div class="logo-3d-icon">🔬</div>
@@ -87,6 +88,7 @@
                 <div class="hologram-badge">REAL‑TIME DFDC CLASSIFIER</div>
             </header>
 
+            <!-- 3‑Panel Grid -->
             <div class="panels-grid">
                 <!-- Panel 1: Image Forensics -->
                 <div class="premium-card" data-panel="image">
@@ -186,6 +188,6 @@
         </main>
     </div>
 
-    <script type="module" src="/static/js/script.js"></script>
+    <script type="module" src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
