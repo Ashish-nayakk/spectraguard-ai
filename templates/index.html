@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>SpectraGuard AI | Deepfake Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="three-canvas-container"></div>
+    <div class="glow-ambient"></div>
+
+    <div class="app-container">
+        <!-- Settings Panel -->
+        <aside class="settings-panel" id="settings-panel">
+            <div class="panel-glow"></div>
+            <div class="settings-header">
+                <div class="icon-3d">⚙️</div>
+                <h3>AI Core Engine</h3>
+                <div class="badge-hologram">ACTIVE</div>
+            </div>
+            
+            <div class="setting-group">
+                <div class="setting-label">
+                    <span>🧬 TTA Ensemble</span>
+                    <span class="tooltip" data-tip="5‑view test‑time augmentation">ⓘ</span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="tta-toggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- Model selection dropdown (styled to blend) -->
+            <div class="setting-group">
+                <div class="setting-label">
+                    <span>🤖 Model</span>
+                </div>
+                <select id="model-select" class="model-select">
+                    <option value="custom">SpectraGuard AI (Custom)</option>
+                    <option value="hf">Hugging Face Deepfake Detector</option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label">⚠️ FAKE Threshold</div>
+                <div class="slider-container">
+                    <input type="range" id="fake-thresh" min="0.50" max="0.90" step="0.01" value="0.70">
+                    <span class="slider-value" id="fake-val">70%</span>
+                </div>
+            </div>
+
+            <div class="setting-group">
+                <div class="setting-label">✅ REAL Threshold</div>
+                <div class="slider-container">
+                    <input type="range" id="real-thresh" min="0.10" max="0.49" step="0.01" value="0.40">
+                    <span class="slider-value" id="real-val">40%</span>
+                </div>
+            </div>
+
+            <div class="model-stats">
+                <div class="stat-line"><span>Architecture</span><span>EfficientNet-B3 + FFT</span></div>
+                <div class="stat-line"><span>Parameters</span><span>11.8M</span></div>
+                <div class="stat-line"><span>Inference</span><span>Dual‑stream</span></div>
+            </div>
+            <div class="energy-wave"></div>
+        </aside>
+
+        <main class="main-dashboard">
+            <header class="dashboard-header">
+                <div class="logo-area">
+                    <div class="logo-3d-icon">🔬</div>
+                    <div class="logo-text">
+                        <h1>SpectraGuard <span class="ai-glow">AI</span></h1>
+                        <p>Seeing Beyond the Surface</p>
+                    </div>
+                </div>
+                <div class="hologram-badge">REAL‑TIME DFDC CLASSIFIER</div>
+            </header>
+
+            <div class="panels-grid">
+                <!-- Panel 1: Image Forensics -->
+                <div class="premium-card" data-panel="image">
+                    <div class="card-shine"></div>
+                    <div class="card-header">
+                        <span class="card-icon">🖼️</span>
+                        <h2>Image Forensics</h2>
+                        <div class="card-status led-green" id="img-status">READY</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-zone" id="img-dropzone">
+                            <input type="file" id="img-input" accept="image/*" hidden>
+                            <div class="upload-icon">📁</div>
+                            <p>Drop image or click</p>
+                            <span class="upload-hint">JPG, PNG, WEBP</span>
+                        </div>
+                        <div class="result-area" id="img-result" style="display: none;">
+                            <div class="preview-row">
+                                <div class="preview-box"><div class="preview-label">Original</div><img id="img-preview" class="preview-img"></div>
+                                <div class="preview-box"><div class="preview-label">Face ROI</div><img id="img-face" class="preview-img"></div>
+                            </div>
+                            <div class="verdict-card" id="img-verdict"></div>
+                            <div class="gauge-3d"><canvas id="img-gauge" width="160" height="160"></canvas><div class="gauge-stats"><div><span>Confidence</span><strong id="img-conf">0%</strong></div><div><span>Fake Prob.</span><strong id="img-prob">0%</strong></div></div></div>
+                            <div class="explanation-box" id="img-explanation"></div>
+                        </div>
+                    </div>
+                    <div class="loader-overlay" id="img-loader"><div class="scanner-line"></div><span>Spectral analysis...</span></div>
+                </div>
+
+                <!-- Panel 2: Live Capture (Webcam) -->
+                <div class="premium-card" data-panel="webcam">
+                    <div class="card-shine"></div>
+                    <div class="card-header">
+                        <span class="card-icon">📸</span>
+                        <h2>Live Capture</h2>
+                        <div class="card-status led-blue" id="webcam-status">OFFLINE</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="webcam-container">
+                            <div class="webcam-wrapper">
+                                <video id="webcam-video" autoplay playsinline muted></video>
+                                <canvas id="webcam-canvas" style="display: none;"></canvas>
+                                <div class="scan-ring"></div>
+                            </div>
+                            <div class="webcam-controls">
+                                <button id="webcam-start" class="btn-primary">🎥 Activate Camera</button>
+                                <button id="webcam-capture" class="btn-secondary" disabled>📷 Capture & Detect</button>
+                            </div>
+                        </div>
+                        <div class="result-area" id="webcam-result" style="display: none;">
+                            <div class="preview-row">
+                                <div class="preview-box"><div class="preview-label">Captured</div><img id="webcam-preview" class="preview-img"></div>
+                                <div class="preview-box"><div class="preview-label">Face Crop</div><img id="webcam-face" class="preview-img"></div>
+                            </div>
+                            <div class="verdict-card" id="webcam-verdict"></div>
+                            <div class="gauge-3d"><canvas id="webcam-gauge" width="160" height="160"></canvas><div class="gauge-stats"><div><span>Confidence</span><strong id="webcam-conf">0%</strong></div><div><span>Fake Prob.</span><strong id="webcam-prob">0%</strong></div></div></div>
+                            <div class="explanation-box" id="webcam-explanation"></div>
+                        </div>
+                    </div>
+                    <div class="loader-overlay" id="webcam-loader"><div class="scanner-line"></div><span>AI scanning frame...</span></div>
+                </div>
+
+                <!-- Panel 3: Video Deep Scan -->
+                <div class="premium-card video-card" data-panel="video">
+                    <div class="card-shine"></div>
+                    <div class="card-header">
+                        <span class="card-icon">🎥</span>
+                        <h2>Video Deep Scan</h2>
+                        <div class="card-status led-green" id="video-status">READY</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-zone" id="video-dropzone">
+                            <input type="file" id="video-input" accept="video/*" hidden>
+                            <div class="upload-icon">🎬</div>
+                            <p>Upload video</p>
+                            <span class="upload-hint">MP4, MOV, AVI, MKV</span>
+                        </div>
+                        <div id="video-controls" style="display: none;">
+                            <div class="video-stats">
+                                <span class="stat-badge">Frames: <span id="vid-frames">0</span></span>
+                                <span class="stat-badge">Fake: <span id="vid-fake">0</span></span>
+                                <span class="stat-badge">Real: <span id="vid-real">0</span></span>
+                                <span class="stat-badge">Uncertain: <span id="vid-unc">0</span></span>
+                            </div>
+                            <div class="chart-container"><canvas id="video-chart"></canvas></div>
+                            <div class="verdict-card" id="video-verdict"></div>
+                            <div class="explanation-box" id="video-explanation"></div>
+                        </div>
+                    </div>
+                    <div class="loader-overlay" id="video-loader"><div class="scanner-line"></div><span>Frame‑by‑frame analysis...</span></div>
+                </div>
+            </div>
+
+            <footer class="dashboard-footer">
+                <p>⚡ SpectraGuard AI · Intelligent Deepfake Detection System · Dual‑stream (Spatial + Frequency) · EfficientNet‑B3</p>
+            </footer>
+        </main>
+    </div>
+
+    <script type="module" src="/static/js/script.js"></script>
+</body>
+</html>

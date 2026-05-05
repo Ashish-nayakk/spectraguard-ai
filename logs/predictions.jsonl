@@ -1,0 +1,5 @@
+{"ts": "2026-05-05T08:12:44.104187", "source": "webcam", "label": "FAKE", "conf": 0.95, "prob": 0.95, "face": true}
+{"ts": "2026-05-05T08:12:44.300767", "source": "webcam", "label": "REAL", "conf": 0.95, "prob": 0.05, "face": true}
+{"ts": "2026-05-05T08:12:44.469774", "source": "webcam", "label": "REAL", "conf": 0.8852, "prob": 0.1148, "face": true}
+{"ts": "2026-05-05T08:12:44.664083", "source": "webcam", "label": "UNCERTAIN", "conf": 0.6029, "prob": 0.6986, "face": true}
+{"ts": "2026-05-05T08:12:44.883276", "source": "webcam", "label": "REAL", "conf": 0.95, "prob": 0.05, "face": true}
